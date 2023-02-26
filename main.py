@@ -1,4 +1,6 @@
 import math
+import os
+from datetime import datetime
 
 import pygame
 
@@ -47,7 +49,37 @@ def lerp(a, b, c):
     return (c * a) + ((1 - c) * b)
 
 
+def get_current_date_time_as_str() -> str:
+    """
+Simply gets the current date and time and returns it in a nice format '%Y-%m-%d %H;%M;%S'.
+    :return: The date and time as a string.
+    """
+
+    return datetime.now().strftime("%Y.%m.%d %H;%M;%S")
+
+
+def create_directory(path: str) -> str:
+    """
+Small function to create a directory if it doesn't exist.
+    :param path: The directory to create.
+    :return: The directory created, identical to path.
+    """
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+    return path
+
+
 def blur_pixel(x: int, y: int, surface_pix_arr: pygame.PixelArray, surface_pix_arr_copy: pygame.PixelArray):
+    """
+Blurs the given pixel by taking the average of each pixel in a 3x3 grid centered on it.
+    :param x: The x coord of the pixel to be blurred.
+    :param y: The y coord of the pixel to be blurred.
+    :param surface_pix_arr: The pixel array of the surface to be blurred.
+    :param surface_pix_arr_copy: The pixel array of the surface to be blurred before blurring occurs as to prevent using
+    already blured pixels.
+    """
+
     colour_sum = [0, 0, 0]  # The sum of all RGB values of each pixel around the one we are handling
 
     for x_offset in range(-1, 2):
@@ -79,6 +111,11 @@ def blur_pixel(x: int, y: int, surface_pix_arr: pygame.PixelArray, surface_pix_a
 
 
 def blur_surface(surface: pygame.Surface):
+    """
+Blurs the given surface.
+    :param surface: Surface to be blurred
+    """
+
     surface_pix_arr = pygame.PixelArray(surface)
     surface_pix_arr_copy = pygame.PixelArray(surface.copy())
 
@@ -107,10 +144,17 @@ def main():
             Point([250, 250], 2 * math.pi * r / 1000, window_size)
         )
 
+    folder = f"pictures/{get_current_date_time_as_str()}"
+    create_directory(folder)
+
+    counter = 0
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 exit(0)
+
+        counter += 1
 
         screen.blit(reduction_surface, (0, 0), special_flags=pygame.BLEND_RGB_SUB)
 
@@ -122,6 +166,9 @@ def main():
             point.move()
 
         pygame.display.flip()
+
+        pygame.image.save(screen, f"{folder}/Image{counter}.png")
+
         clock.tick(60)
 
 
