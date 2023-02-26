@@ -48,6 +48,9 @@ def main():
     screen = pygame.display.set_mode(window_size)
     clock = pygame.time.Clock()
 
+    reduction_surface = pygame.Surface(window_size)
+    reduction_surface.fill((1, 1, 1))
+
     points: list[Point] = []
     for r in range(1000):
         points.append(
@@ -59,7 +62,7 @@ def main():
             if event.type == pygame.QUIT:
                 exit(0)
 
-        screen.fill((0, 0, 0))
+        screen.blit(reduction_surface, (0, 0), special_flags=pygame.BLEND_RGB_SUB)
 
         for point in points:
             pygame.draw.rect(screen, (255, 255, 255), pygame.Rect(point.position[0], point.position[1], 1, 1))
