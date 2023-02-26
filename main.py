@@ -2,6 +2,8 @@ import math
 
 import pygame
 
+DIFFUSE_SPEED = 0.5
+
 
 class Point:
     def __init__(self, position: list[float, float], direction: float, playground_size: tuple[int, int]):
@@ -41,6 +43,54 @@ Bounces off the edges of the playground.
             self.vector[1] = -self.vector[1]
 
 
+def lerp(a, b, c):
+    return (c * a) + ((1 - c) * b)
+
+
+def blur_pixel(x: int, y: int, surface_pix_arr: pygame.PixelArray, surface_pix_arr_copy: pygame.PixelArray):
+    colour_sum = [0, 0, 0]  # The sum of all RGB values of each pixel around the one we are handling
+
+    for x_offset in range(-1, 2):
+        for y_offset in range(-1, 2):
+
+            a = x + x_offset
+            b = y + y_offset
+
+            if a < 0:
+                a = 0
+            elif a > surface_pix_arr.shape[0] - 1:
+                a = surface_pix_arr.shape[0] - 1
+
+            if b < 0:
+                b = 0
+            elif b > surface_pix_arr.shape[1] - 1:
+                b = surface_pix_arr.shape[1] - 1
+
+            colour_at_ab = pygame.Color(surface_pix_arr_copy[a, b])[1:4]  # Remove alpha
+
+            colour_sum = [a + b for a, b in zip(colour_sum, colour_at_ab)]
+
+    original_colour = pygame.Color(surface_pix_arr_copy[x, y])[1:4]
+    colour_average = [int(a / 9) for a in colour_sum]
+
+    diffused_colour = [lerp(original_colour[a], colour_average[a], DIFFUSE_SPEED) for a in range(3)]
+
+    surface_pix_arr[x, y] = pygame.Color(diffused_colour)
+
+
+def blur_surface(surface: pygame.Surface):
+    surface_pix_arr = pygame.PixelArray(surface)
+    surface_pix_arr_copy = pygame.PixelArray(surface.copy())
+
+    x_size, y_size = surface_pix_arr.shape
+
+    for x in range(x_size):
+        for y in range(y_size):
+            blur_pixel(x, y, surface_pix_arr, surface_pix_arr_copy)
+
+    surface_pix_arr.close()
+
+
 def main():
     pygame.init()
     pygame.display.set_caption("Slime Time")
@@ -63,6 +113,8 @@ def main():
                 exit(0)
 
         screen.blit(reduction_surface, (0, 0), special_flags=pygame.BLEND_RGB_SUB)
+
+        blur_surface(screen)
 
         for point in points:
             pygame.draw.rect(screen, (255, 255, 255), pygame.Rect(point.position[0], point.position[1], 1, 1))
